@@ -27,14 +27,19 @@ export default {
 
     const url = new URL(request.url);
 
-    // 健康检查：访问 /health 可验证 Key 是否配置成功
+    // 健康检查
     if (url.pathname === '/health') {
-      const keyExists = !!env.KIMI_API_KEY;
+      const rawKey = env.KIMI_API_KEY || '';
+      // 去除所有空白字符（空格、换行、制表符等）
+      const cleanedKey = rawKey.replace(/\s/g, '');
       return new Response(JSON.stringify({
         status: 'ok',
-        keyConfigured: keyExists,
-        keyLength: env.KIMI_API_KEY?.length || 0,
-        hint: keyExists ? 'Key 已配置' : '请在 Variables 中添加 KIMI_API_KEY 并 Deploy',
+        keyConfigured: !!cleanedKey,
+        rawLength: rawKey.length,
+        cleanedLength: cleanedKey.length,
+        firstChars: cleanedKey.slice(0, 12),
+        targetBase: env.TARGET_BASE_URL || 'https://api.moonshot.cn/v1',
+        hint: cleanedKey ? 'Key 已配置' : '请在 Variables 中添加 KIMI_API_KEY（Secret 类型），然后点击 Deploy',
       }), {
         headers: {
           'Content-Type': 'application/json',
@@ -44,12 +49,10 @@ export default {
     }
 
     const targetPath = url.pathname + url.search;
-
-    // 目标 API（默认 Kimi，可改为任意 OpenAI 兼容接口）
-    const targetBase = env.TARGET_BASE_URL || 'https://api.moonshot.cn';
+    // 注意：Kimi API 的标准 Base URL 是 https://api.moonshot.cn/v1
+    const targetBase = env.TARGET_BASE_URL || 'https://api.moonshot.cn/v1';
     const targetUrl = targetBase + targetPath;
 
-    // 读取请求体
     let body;
     try {
       body = await request.json();
@@ -57,8 +60,8 @@ export default {
       body = {};
     }
 
-    // 环境变量中的 API Key（服务端持有，前端不可见）
-    const apiKey = env.KIMI_API_KEY;
+    // 读取 Key 并去除所有空白字符
+    const apiKey = (env.KIMI_API_KEY || '').replace(/\s/g, '');
     if (!apiKey) {
       return new Response(JSON.stringify({
         error: 'Proxy API Key not configured',
@@ -82,7 +85,7 @@ export default {
       body: JSON.stringify(body),
     });
 
-    // 构造响应（保留流式输出能力）
+    // 构造响应
     const newHeaders = new Headers(response.headers);
     newHeaders.set('Access-Control-Allow-Origin', origin);
     newHeaders.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
