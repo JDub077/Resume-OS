@@ -59,6 +59,7 @@ export default function MaterialGenerate() {
   const location = useLocation()
   const [step, setStep] = useState(1)
   const [purpose, setPurpose] = useState('')
+  const [targetDetail, setTargetDetail] = useState('')
   const [experiences, setExperiences] = useState(getExperiences())
   const [selectedIds, setSelectedIds] = useState([])
   const [loading, setLoading] = useState(false)
@@ -142,7 +143,7 @@ export default function MaterialGenerate() {
 
     const start = Date.now()
     try {
-      const prompt = buildGeneratePrompt(purpose, selected)
+      const prompt = buildGeneratePrompt(purpose, selected, targetDetail)
       const content = await callAI(prompt)
       const cost = ((Date.now() - start) / 1000).toFixed(1)
       setElapsed(Number(cost))
@@ -171,6 +172,7 @@ export default function MaterialGenerate() {
     saveGeneratedRecord({
       purpose,
       purposeLabel,
+      targetDetail,
       content,
       experienceIds: selectedIds,
     })
@@ -208,7 +210,7 @@ export default function MaterialGenerate() {
         ))}
       </div>
 
-      {/* 步骤1：选择用途 */}
+      {/* 步骤1：选择用途 + 目标方向 */}
       {step === 1 && (
         <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
           <h2 className="text-lg font-bold text-text mb-4">第一步：选择用途</h2>
@@ -227,6 +229,34 @@ export default function MaterialGenerate() {
               </button>
             ))}
           </div>
+
+          {purpose && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mb-6"
+            >
+              <label className="block text-sm font-medium text-text mb-2">
+                目标方向（选填，填写后 AI 推荐更精准）
+              </label>
+              <input
+                type="text"
+                value={targetDetail}
+                onChange={e => setTargetDetail(e.target.value)}
+                placeholder={
+                  purpose === '求职简历' ? '如：前端开发岗、算法工程师、产品经理...'
+                  : purpose === '保研陈述' ? '如：计算机视觉方向、软件工程...'
+                  : purpose === '面试自我介绍' ? '如：互联网公司技术岗、国企管培生...'
+                  : '如：某公司名称、具体岗位或方向...'
+                }
+                className="w-full px-4 py-2.5 rounded-xl border border-border bg-bg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+              />
+              <p className="mt-1 text-xs text-text-secondary">
+                填写越具体，AI 越能针对性包装你的经历。例如投前端岗会优先推荐技术类项目经历。
+              </p>
+            </motion.div>
+          )}
+
           <button
             onClick={() => purpose && setStep(2)}
             disabled={!purpose}
@@ -347,7 +377,7 @@ export default function MaterialGenerate() {
                 </span>
               )}
               <button
-                onClick={() => { setStep(1); setResult(''); setSelectedIds([]); setPurpose(''); setIsDemo(false); setAiInfo(null); setElapsed(0); setIsEditing(false); setEditedResult('') }}
+                onClick={() => { setStep(1); setResult(''); setSelectedIds([]); setPurpose(''); setTargetDetail(''); setIsDemo(false); setAiInfo(null); setElapsed(0); setIsEditing(false); setEditedResult('') }}
                 className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium text-text-secondary hover:bg-bg border border-border transition-colors"
               >
                 <RotateCcw size={14} />

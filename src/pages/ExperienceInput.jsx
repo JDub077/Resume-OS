@@ -2,10 +2,8 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Wand2, Save, Upload, ArrowLeft, Loader2, X, Sparkles } from 'lucide-react'
-import { getExperienceById, saveExperience } from '../data/storage.js'
+import { getExperienceById, saveExperience, getCategories, addCategory } from '../data/storage.js'
 import { parseExperience, polishExperience } from '../utils/ai.js'
-
-const CATEGORIES = ['学生工作', '志愿服务', '实习经历', '项目实践', '获奖荣誉']
 
 const FIELD_META = [
   { key: 'title', label: '经历标题', step: 0 },
@@ -28,6 +26,7 @@ export default function ExperienceInput() {
   const [parsingStep, setParsingStep] = useState(-1)
   const [parsingField, setParsingField] = useState('')
   const [polishing, setPolishing] = useState(false)
+  const categories = getCategories()
 
   useEffect(() => {
     if (isEdit) {
@@ -86,6 +85,10 @@ export default function ExperienceInput() {
     if (!parsed?.title) {
       showToast('请填写经历标题')
       return
+    }
+    // 如果输入了新分类，自动添加到分类列表
+    if (parsed.category && !categories.includes(parsed.category)) {
+      addCategory(parsed.category)
     }
     const data = {
       ...parsed,
@@ -233,13 +236,18 @@ export default function ExperienceInput() {
               transition={{ duration: 0.3 }}
             >
               <label className="block text-sm font-medium text-text mb-2">类型</label>
-              <select
+              <input
+                type="text"
+                list="category-list"
                 value={parsed.category || ''}
                 onChange={e => setParsed({ ...parsed, category: e.target.value })}
+                placeholder="选择现有分类或输入新分类"
                 className="w-full px-4 py-2.5 rounded-xl border border-border bg-bg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
-              >
-                {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
+              />
+              <datalist id="category-list">
+                {categories.map(c => <option key={c} value={c} />)}
+              </datalist>
+              <p className="mt-1 text-xs text-text-secondary">可直接输入新分类（如"社会实践"），保存后会自动创建</p>
             </motion.div>
 
             {/* 时间 */}

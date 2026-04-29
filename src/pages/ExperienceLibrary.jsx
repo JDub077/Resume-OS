@@ -2,17 +2,23 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, Pencil, Trash2, FileText, Search, X, Briefcase, Heart, TrendingUp, Code, Award } from 'lucide-react'
-import { getExperiences, deleteExperience, getStats } from '../data/storage.js'
+import { getExperiences, deleteExperience, getStats, getCategories } from '../data/storage.js'
 
-const TABS = ['全部', '学生工作', '志愿服务', '实习经历', '项目实践', '获奖荣誉']
+const ICON_MAP = {
+  '学生工作': Briefcase,
+  '志愿服务': Heart,
+  '实习经历': TrendingUp,
+  '项目实践': Code,
+  '获奖荣誉': Award,
+}
 
-const categoryMeta = [
-  { key: '学生工作', icon: Briefcase, color: 'bg-amber-50 text-amber-600' },
-  { key: '志愿服务', icon: Heart, color: 'bg-rose-50 text-rose-600' },
-  { key: '实习经历', icon: TrendingUp, color: 'bg-emerald-50 text-emerald-600' },
-  { key: '项目实践', icon: Code, color: 'bg-violet-50 text-violet-600' },
-  { key: '获奖荣誉', icon: Award, color: 'bg-sky-50 text-sky-600' },
-]
+const COLOR_MAP = {
+  '学生工作': 'bg-amber-50 text-amber-600',
+  '志愿服务': 'bg-rose-50 text-rose-600',
+  '实习经历': 'bg-emerald-50 text-emerald-600',
+  '项目实践': 'bg-violet-50 text-violet-600',
+  '获奖荣誉': 'bg-sky-50 text-sky-600',
+}
 
 const categoryColors = {
   '学生工作': 'bg-amber-50 text-amber-600 border-amber-100',
@@ -31,10 +37,18 @@ export default function ExperienceLibrary() {
   const [deleteId, setDeleteId] = useState(null)
   const [toast, setToast] = useState(null)
   const stats = getStats()
+  const categories = getCategories()
+
+  const tabs = ['全部', ...categories]
+  const categoryMeta = categories.map(cat => ({
+    key: cat,
+    icon: ICON_MAP[cat] || Briefcase,
+    color: COLOR_MAP[cat] || 'bg-gray-50 text-gray-600',
+  }))
 
   useEffect(() => {
     const cat = location.state?.category
-    if (cat && TABS.includes(cat)) {
+    if (cat && tabs.includes(cat)) {
       setActiveTab(cat)
     }
   }, [location.state])
@@ -117,7 +131,7 @@ export default function ExperienceLibrary() {
 
       {/* 分类 Tab */}
       <div className="flex flex-wrap gap-2 mb-6">
-        {TABS.map(tab => (
+        {tabs.map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}

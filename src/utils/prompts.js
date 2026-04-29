@@ -1,4 +1,4 @@
-export function buildGeneratePrompt(purpose, experiences) {
+export function buildGeneratePrompt(purpose, experiences, targetDetail = '') {
   const expText = experiences.map((e, i) => `${i + 1}. ${e.title}：${e.description}${e.result ? '，成果：' + e.result : ''}`).join('\n');
 
   const purposeMap = {
@@ -62,7 +62,7 @@ export function buildGeneratePrompt(purpose, experiences) {
 
   const config = purposeMap[purpose] || purposeMap['求职简历'];
 
-  return `你是一名专业大学生成长材料顾问。
+  let prompt = `你是一名专业大学生成长材料顾问。
 
 用户经历如下：
 
@@ -74,7 +74,12 @@ ${expText}
 - 语言风格：${config.tone}
 - 重点突出：${config.focus}
 - 篇幅限制：${config.length}
-- ${config.extra}
+- ${config.extra}`;
 
-请直接输出文案内容，不要加任何前缀说明。`;
+  if (targetDetail) {
+    prompt += `\n\n用户的目标方向/具体需求：${targetDetail}\n请根据以上目标方向，有针对性地选择和包装经历，突出与目标最相关的能力和成果。`;
+  }
+
+  prompt += `\n\n请直接输出文案内容，不要加任何前缀说明。`;
+  return prompt;
 }

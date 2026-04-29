@@ -136,6 +136,29 @@ export function saveSettings(settings) {
   localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(settings));
 }
 
+const STORAGE_KEY_CATEGORIES = 'resume_os_categories';
+const DEFAULT_CATEGORIES = ['学生工作', '志愿服务', '实习经历', '项目实践', '获奖荣誉'];
+
+export function getCategories() {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY_CATEGORIES);
+    if (stored) return JSON.parse(stored);
+    return DEFAULT_CATEGORIES;
+  } catch {
+    return DEFAULT_CATEGORIES;
+  }
+}
+
+export function addCategory(name) {
+  const list = getCategories();
+  const trimmed = name?.trim();
+  if (trimmed && !list.includes(trimmed)) {
+    list.push(trimmed);
+    localStorage.setItem(STORAGE_KEY_CATEGORIES, JSON.stringify(list));
+  }
+  return list;
+}
+
 const STORAGE_KEY_GENERATED = 'resume_os_generated';
 
 export function getGeneratedRecords() {

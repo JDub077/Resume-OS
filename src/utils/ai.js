@@ -1,7 +1,7 @@
 import { getSettings } from '../data/storage.js';
 import { mockPolish } from './mockPolish.js';
 
-export async function callAI(prompt) {
+export async function callAI(prompt, opts = {}) {
   const settings = getSettings();
   const useProxy = settings.useProxy;
   const apiKey = settings.apiKey;
@@ -32,8 +32,8 @@ export async function callAI(prompt) {
         { role: 'system', content: '你是一名专业的大学生成长材料顾问，擅长将学生的经历转化为高质量的申请材料。' },
         { role: 'user', content: prompt }
       ],
-      temperature: 0.7,
-      max_tokens: 2000
+      temperature: opts.temperature ?? 0.7,
+      max_tokens: opts.maxTokens ?? 2000
     })
   });
 
@@ -57,17 +57,25 @@ export async function parseExperience(text) {
   }
 
   try {
-    const prompt = `你是一名专业的大学生经历解析助手。请将以下经历文本解析为结构化数据。
+    const prompt = `你是一名专业的大学生经历解析助手。请将以下经历文本解析为结构化JSON数据。
 
 要求：
-1. title：提取经历的核心事件名称作为标题，简洁有力（10字以内），不要简单截取原文开头
-2. category：根据经历性质从["学生工作","志愿服务","实习经历","项目实践","获奖荣誉"]中选择最匹配的一个
-3. time：提取经历发生的时间，格式化为"YYYY.MM"（如"2024.09"），若跨时段用"2024.09 - 2025.06"
-4. description：用1-2句话概括经历内容，保留核心职责和动作，语言简洁专业
-5. tags：从经历中提炼3-5个最能体现个人能力的标签（如"数据分析","领导力","团队协作"等），要与经历内容高度匹配
-6. result：提取所有量化成果（数字、百分比、排名等），用简短的一句话概括
+1. title：提取核心事件名称（8-15字），简洁有力。不要简单截取原文前几个字，要提炼出事件本质。例如"腾讯产品运营实习"、"校园二手交易平台"。
+2. category：根据经历性质从["学生工作","志愿服务","实习经历","项目实践","获奖荣誉"]中选择最匹配的一个。如果无法判断，选最接近的。
+3. time：提取经历发生的时间，格式化为"YYYY.MM"（如"2024.09"），若跨时段用"2024.09 - 2025.06"。如文本中没有明确时间，请根据上下文合理推断或留空。
+4. description：用1-2句话概括经历内容，保留核心职责和动作，语言简洁专业。不要简单复制原文，要进行提炼。
+5. tags：从经历中提炼3-5个最能体现个人能力的标签。标签要精准匹配经历内容，避免泛泛而谈的词汇。例如涉及代码写"前端开发"、涉及数据写"数据分析"、涉及带队写"团队管理"。
+6. result：提取所有量化成果（数字、百分比、排名等），用简短的一句话概括。如果没有量化数据，总结一句定性成果。
 
-只返回JSON，不要任何解释。
+示例1：
+输入："2024年3月到8月，我带领5人团队做了一个校园二手小程序，负责前端开发和需求分析，用户数突破2000"
+输出：{"title":"校园二手交易平台","category":"项目实践","time":"2024.03 - 2024.08","description":"作为项目负责人，带领5人团队开发校园二手物品交易小程序，负责需求分析、产品设计与前端开发。","tags":["产品开发","团队协作","前端技术"],"result":"小程序上线3个月用户数突破2000人"}
+
+示例2：
+输入："大三上学期我在学生会外联部当部长，拉了三万块钱赞助，组织了迎新晚会和篮球赛"
+输出：{"title":"学生会外联部部长","category":"学生工作","time":"2024.09 - 2025.01","description":"负责学生会外联部日常管理工作，统筹部门招新与培训，主导学院大型活动的赞助洽谈与资源整合。","tags":["领导力","商务谈判","组织协调"],"result":"拉取赞助经费3万元，组织大型活动2场"}
+
+请严格遵循以上格式，只返回JSON，不要markdown代码块，不要任何解释。
 
 文本："""${text}"""
 
@@ -81,10 +89,20 @@ export async function parseExperience(text) {
   "result": "..."
 }`;
 
-    const content = await callAI(prompt);
+    const content = await callAI(prompt, { temperature: 0.2 });
     const jsonMatch = content.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
-      return JSON.parse(jsonMatch[0]);
+      const parsed = JSON.parse(jsonMatch[0]);
+      // 字段校验与补全
+      const fallback = localParse(text);
+      return {
+        title: parsed.title || fallback.title,
+        category: parsed.category || fallback.category,
+        time: parsed.time || fallback.time,
+        description: parsed.description || fallback.description,
+        tags: Array.isArray(parsed.tags) && parsed.tags.length > 0 ? parsed.tags : fallback.tags,
+        result: parsed.result || fallback.result,
+      };
     }
     return localParse(text);
   } catch {

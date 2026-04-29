@@ -15,7 +15,7 @@ import {
   X,
   ArrowRight
 } from 'lucide-react'
-import { getStats, getExperiences } from '../data/storage.js'
+import { getStats, getExperiences, getCategories } from '../data/storage.js'
 import { CalendarDays } from 'lucide-react'
 
 const categoryIcons = {
@@ -66,7 +66,8 @@ export default function Dashboard() {
     setTimeline(sorted)
   }, [])
 
-  const categories = ['学生工作', '志愿服务', '实习经历', '项目实践']
+  const categories = getCategories()
+  const FallbackIcon = Briefcase
 
   return (
     <div>
@@ -76,19 +77,21 @@ export default function Dashboard() {
         animate={{ opacity: 1, y: 0 }}
         className="mb-10"
       >
-        <h1 className="text-3xl font-bold text-text mb-2">
+        <h1 className="text-3xl font-bold text-text mb-2"
+        >
           你好，同学 👋
         </h1>
-        <p className="text-text-secondary text-lg">
+        <p className="text-text-secondary text-lg"
+        >
           你的成长经历已累计沉淀 <span className="font-bold text-primary">{stats.total}</span> 条
         </p>
       </motion.div>
 
       {/* 数据卡片 */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 mb-10">
         {categories.map((cat, i) => {
-          const Icon = categoryIcons[cat]
-          const colorClass = categoryColors[cat]
+          const Icon = categoryIcons[cat] || FallbackIcon
+          const colorClass = categoryColors[cat] || 'bg-gray-50 text-gray-600'
           return (
             <motion.div
               key={cat}
