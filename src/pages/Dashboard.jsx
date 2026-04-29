@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { motion } from 'framer-motion'
+import { motion, AnimatePresence } from 'framer-motion'
 import {
   PlusCircle,
   FileText,
@@ -9,7 +9,11 @@ import {
   Heart,
   Code,
   Award,
-  TrendingUp
+  TrendingUp,
+  AlertCircle,
+  CheckCircle2,
+  X,
+  ArrowRight
 } from 'lucide-react'
 import { getStats } from '../data/storage.js'
 
@@ -29,9 +33,24 @@ const categoryColors = {
   '获奖荣誉': 'bg-sky-50 text-sky-600',
 }
 
+const painPoints = [
+  { icon: AlertCircle, text: '同一段经历要反复改写几十次' },
+  { icon: AlertCircle, text: '经历散落在微信、备忘录、旧文档里' },
+  { icon: AlertCircle, text: '有经历但不会包装自己' },
+  { icon: AlertCircle, text: '去年写的材料，今年新增经历后全部重写' },
+]
+
+const solutions = [
+  { icon: CheckCircle2, text: '录入一次，永久沉淀为结构化资产' },
+  { icon: CheckCircle2, text: '统一库管理，随时检索调用' },
+  { icon: CheckCircle2, text: 'AI 根据不同场景自动包装表达' },
+  { icon: CheckCircle2, text: '经历增加后，材料自动更新升级' },
+]
+
 export default function Dashboard() {
   const navigate = useNavigate()
   const [stats, setStats] = useState({ total: 0, generated: 0 })
+  const [showPainModal, setShowPainModal] = useState(false)
 
   useEffect(() => {
     setStats(getStats())
@@ -78,6 +97,26 @@ export default function Dashboard() {
         })}
       </div>
 
+      {/* 痛点对比入口 */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.25 }}
+        className="bg-gradient-to-r from-rose-50 to-orange-50 rounded-2xl p-5 border border-rose-100 mb-6 cursor-pointer hover:shadow-md transition-shadow"
+        onClick={() => setShowPainModal(true)}
+      >
+        <div className="flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center flex-shrink-0">
+            <AlertCircle size={20} />
+          </div>
+          <div className="flex-1">
+            <h2 className="font-bold text-text mb-0.5">为什么需要履历星球？</h2>
+            <p className="text-sm text-text-secondary">点击了解传统写材料方式的 4 大痛点与我们的解决方案</p>
+          </div>
+          <ArrowRight size={18} className="text-rose-400 flex-shrink-0" />
+        </div>
+      </motion.div>
+
       {/* 快捷操作 */}
       <motion.div
         initial={{ opacity: 0, y: 16 }}
@@ -121,6 +160,86 @@ export default function Dashboard() {
         <TrendingUp size={16} />
         已累计生成材料 <span className="font-bold text-text">{stats.generated}</span> 份
       </motion.div>
+
+      {/* 痛点对比弹窗 */}
+      <AnimatePresence>
+        {showPainModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-surface rounded-2xl shadow-xl w-full max-w-2xl max-h-[90vh] overflow-auto"
+            >
+              <div className="p-6 border-b border-border flex items-center justify-between">
+                <h2 className="text-lg font-bold text-text">为什么需要履历星球？</h2>
+                <button
+                  onClick={() => setShowPainModal(false)}
+                  className="p-1.5 rounded-lg hover:bg-bg text-text-secondary"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* 左边：痛点 */}
+                <div>
+                  <h3 className="text-sm font-bold text-rose-600 mb-4 flex items-center gap-2">
+                    <AlertCircle size={16} />
+                    传统方式的痛点
+                  </h3>
+                  <div className="space-y-3">
+                    {painPoints.map((item, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: i * 0.1 }}
+                        className="flex items-start gap-3 p-3 rounded-xl bg-rose-50/50 border border-rose-100"
+                      >
+                        <item.icon size={16} className="text-rose-400 mt-0.5 flex-shrink-0" />
+                        <p className="text-sm text-text">{item.text}</p>
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* 右边：方案 */}
+                <div>
+                  <h3 className="text-sm font-bold text-primary mb-4 flex items-center gap-2">
+                    <CheckCircle2 size={16} />
+                    履历星球的方案
+                  </h3>
+                  <div className="space-y-3">
+                    {solutions.map((item, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, x: 10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: i * 0.1 + 0.2 }}
+                        className="flex items-start gap-3 p-3 rounded-xl bg-primary/5 border border-primary/10"
+                      >
+                        <item.icon size={16} className="text-primary mt-0.5 flex-shrink-0" />
+                        <p className="text-sm text-text">{item.text}</p>
+                      </motion.div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-6 border-t border-border flex justify-end">
+                <button
+                  onClick={() => { setShowPainModal(false); navigate('/input') }}
+                  className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-medium hover:bg-primary-dark transition-colors"
+                >
+                  开始体验
+                  <ArrowRight size={16} />
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

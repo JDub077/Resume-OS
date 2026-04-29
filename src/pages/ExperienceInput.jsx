@@ -1,11 +1,20 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { motion } from 'framer-motion'
-import { Wand2, Save, Upload, ArrowLeft, Loader2, X } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import { Wand2, Save, Upload, ArrowLeft, Loader2, X, Sparkles } from 'lucide-react'
 import { getExperienceById, saveExperience } from '../data/storage.js'
 import { parseExperience } from '../utils/ai.js'
 
 const CATEGORIES = ['学生工作', '志愿服务', '实习经历', '项目实践', '获奖荣誉']
+
+const FIELD_META = [
+  { key: 'title', label: '经历标题', step: 0 },
+  { key: 'category', label: '类型', step: 1 },
+  { key: 'time', label: '时间', step: 2 },
+  { key: 'tags', label: '能力标签', step: 3 },
+  { key: 'result', label: '成果数据', step: 4 },
+  { key: 'description', label: '详细描述', step: 5 },
+]
 
 export default function ExperienceInput() {
   const navigate = useNavigate()
@@ -16,6 +25,8 @@ export default function ExperienceInput() {
   const [parsed, setParsed] = useState(null)
   const [loading, setLoading] = useState(false)
   const [toast, setToast] = useState(null)
+  const [parsingStep, setParsingStep] = useState(-1)
+  const [parsingField, setParsingField] = useState('')
 
   useEffect(() => {
     if (isEdit) {
@@ -30,12 +41,27 @@ export default function ExperienceInput() {
   const handleParse = async () => {
     if (!rawText.trim()) return
     setLoading(true)
+    setParsed(null)
+    setParsingStep(0)
+    setParsingField('正在分析文本语义...')
+
     try {
       const result = await parseExperience(rawText.trim())
+
+      // 逐字段解析动画
+      for (let i = 0; i < FIELD_META.length; i++) {
+        setParsingStep(i)
+        setParsingField(`正在识别：${FIELD_META[i].label}...`)
+        await new Promise(r => setTimeout(r, 450))
+      }
+
       setParsed(result)
+      setParsingStep(FIELD_META.length)
+      setParsingField('')
       showToast('AI 解析完成，请检查并调整')
     } catch (e) {
       showToast(e.message || '解析失败')
+      setParsingStep(-1)
     } finally {
       setLoading(false)
     }
@@ -68,6 +94,8 @@ export default function ExperienceInput() {
       showToast('文件已接收，请手动补充内容')
     }
   }
+
+  const fieldVisible = (step) => parsed !== null && parsingStep > step
 
   return (
     <div>
@@ -111,6 +139,54 @@ export default function ExperienceInput() {
         </div>
       </div>
 
+      {/* 解析中动画 */}
+      <AnimatePresence>
+        {loading && parsingStep >= 0 && parsingStep < FIELD_META.length && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            className="bg-surface rounded-2xl border border-border p-6 mb-6"
+          >
+            <div className="flex items-center gap-3 mb-5">
+              <Sparkles size={18} className="text-primary animate-pulse" />
+              <h2 className="text-lg font-bold text-text">AI 正在解析</h2>
+            </div>
+
+            <div className="space-y-3">
+              {FIELD_META.map((field, i) => (
+                <div key={field.key} className="flex items-center gap-3">
+                  <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold transition-colors ${
+                    parsingStep > i ? 'bg-primary text-white' : parsingStep === i ? 'bg-primary/20 text-primary' : 'bg-border text-text-secondary'
+                  }`}>
+                    {parsingStep > i ? '✓' : i + 1}
+                  </div>
+                  <span className={`text-sm transition-colors ${
+                    parsingStep >= i ? 'text-text font-medium' : 'text-text-secondary'
+                  }`}>
+                    {field.label}
+                  </span>
+                  {parsingStep === i && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="ml-auto flex items-center gap-1.5 text-xs text-primary"
+                    >
+                      <Loader2 size={12} className="animate-spin" />
+                      识别中...
+                    </motion.div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-4 text-xs text-text-secondary bg-bg rounded-lg px-3 py-2">
+              {parsingField}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* 解析结果表单 */}
       {parsed && (
         <motion.div
@@ -120,7 +196,12 @@ export default function ExperienceInput() {
         >
           <h2 className="text-lg font-bold text-text mb-5">解析结果</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
+            {/* 标题 */}
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={fieldVisible(0) ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
+              transition={{ duration: 0.3 }}
+            >
               <label className="block text-sm font-medium text-text mb-2">经历标题</label>
               <input
                 type="text"
@@ -128,8 +209,14 @@ export default function ExperienceInput() {
                 onChange={e => setParsed({ ...parsed, title: e.target.value })}
                 className="w-full px-4 py-2.5 rounded-xl border border-border bg-bg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
               />
-            </div>
-            <div>
+            </motion.div>
+
+            {/* 类型 */}
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={fieldVisible(1) ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
+              transition={{ duration: 0.3 }}
+            >
               <label className="block text-sm font-medium text-text mb-2">类型</label>
               <select
                 value={parsed.category || ''}
@@ -138,8 +225,14 @@ export default function ExperienceInput() {
               >
                 {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
               </select>
-            </div>
-            <div>
+            </motion.div>
+
+            {/* 时间 */}
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={fieldVisible(2) ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
+              transition={{ duration: 0.3 }}
+            >
               <label className="block text-sm font-medium text-text mb-2">时间</label>
               <input
                 type="text"
@@ -148,8 +241,14 @@ export default function ExperienceInput() {
                 placeholder="如 2025.04"
                 className="w-full px-4 py-2.5 rounded-xl border border-border bg-bg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
               />
-            </div>
-            <div>
+            </motion.div>
+
+            {/* 成果 */}
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={fieldVisible(4) ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
+              transition={{ duration: 0.3 }}
+            >
               <label className="block text-sm font-medium text-text mb-2">成果数据</label>
               <input
                 type="text"
@@ -158,8 +257,15 @@ export default function ExperienceInput() {
                 placeholder="如 服务学生120人"
                 className="w-full px-4 py-2.5 rounded-xl border border-border bg-bg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
               />
-            </div>
-            <div className="md:col-span-2">
+            </motion.div>
+
+            {/* 标签 */}
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={fieldVisible(3) ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
+              transition={{ duration: 0.3 }}
+              className="md:col-span-2"
+            >
               <label className="block text-sm font-medium text-text mb-2">能力标签（用逗号分隔）</label>
               <input
                 type="text"
@@ -168,15 +274,22 @@ export default function ExperienceInput() {
                 placeholder="如 组织协调, 宣传运营"
                 className="w-full px-4 py-2.5 rounded-xl border border-border bg-bg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
               />
-            </div>
-            <div className="md:col-span-2">
+            </motion.div>
+
+            {/* 描述 */}
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={fieldVisible(5) ? { opacity: 1, y: 0 } : { opacity: 0, y: 8 }}
+              transition={{ duration: 0.3 }}
+              className="md:col-span-2"
+            >
               <label className="block text-sm font-medium text-text mb-2">详细描述</label>
               <textarea
                 value={parsed.description || ''}
                 onChange={e => setParsed({ ...parsed, description: e.target.value })}
                 className="w-full h-24 px-4 py-3 rounded-xl border border-border bg-bg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
               />
-            </div>
+            </motion.div>
           </div>
 
           <div className="mt-6 flex justify-end">
@@ -192,19 +305,21 @@ export default function ExperienceInput() {
       )}
 
       {/* Toast */}
-      {toast && (
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0 }}
-          className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-5 py-3 rounded-xl bg-text text-white text-sm shadow-lg"
-        >
-          {toast}
-          <button onClick={() => setToast(null)} className="ml-1">
-            <X size={14} />
-          </button>
-        </motion.div>
-      )}
+      <AnimatePresence>
+        {toast && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0 }}
+            className="fixed bottom-6 right-6 z-50 flex items-center gap-2 px-5 py-3 rounded-xl bg-text text-white text-sm shadow-lg"
+          >
+            {toast}
+            <button onClick={() => setToast(null)} className="ml-1">
+              <X size={14} />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

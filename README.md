@@ -1,16 +1,116 @@
-# React + Vite
+# 履历星球 Resume OS
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+> **让每一段经历都被记录，让每一次申请都无需重写。**
 
-Currently, two official plugins are available:
+[线上体验](https://jdub077.github.io/Resume-OS/) · [录屏演示](#录屏脚本)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+---
 
-## React Compiler
+## 一、项目背景
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+大学生在校期间频繁遇到"填写材料"的场景：国家奖学金申请、求职简历、保研个人陈述……这些材料本质上都围绕同一个核心——**用户过去做过什么、取得了什么成果、具备什么能力**。
 
-## Expanding the ESLint configuration
+但现实中面临四大痛点：
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+1. **重复劳动严重**：同一段经历需要反复改写几十次
+2. **经历分散遗忘**：散落在 Word、微信、备忘录各处，需要时找不到
+3. **不会表达**：有经历但不会包装，"负责招新"vs"主导招新策划覆盖 300+ 人次"
+4. **无法动态更新**：去年写过的材料，今年新增经历后仍需重写
+
+---
+
+## 二、解决方案
+
+履历星球是一个面向大学生的 **AI 经历资产管理平台**，核心解决路径：
+
+```
+碎片化经历 → AI 结构化解析 → 经历资产库 → 多场景材料生成
+```
+
+### 核心功能
+
+| 模块 | 功能说明 |
+|------|---------|
+| 首页 Dashboard | 经历统计、分类卡片、快捷入口 |
+| 经历录入 | 文本/文件录入，AI 自动解析标题、类型、时间、标签、成果 |
+| 经历资产库 | 分类筛选、搜索、编辑、删除、一键用于生成 |
+| AI 材料生成 | 8 大场景（奖学金/求职/保研/面试等），选择经历一键生成 |
+| 模板社区 | 热门模板一键套用，覆盖国家奖学金、产品经理简历等场景 |
+
+---
+
+## 三、技术栈
+
+- **前端**：React 19 + Vite 8 + TailwindCSS 4
+- **动画**：Framer Motion
+- **路由**：React Router
+- **图标**：Lucide React
+- **AI 接口**：兼容 OpenAI API 格式（支持 DeepSeek / Kimi / OpenAI 等）
+- **数据存储**：localStorage（比赛版）/ 可扩展后端数据库
+
+---
+
+## 四、快速开始
+
+```bash
+cd Resume-OS
+npm install
+npm run dev
+```
+
+构建：
+
+```bash
+npm run build
+```
+
+---
+
+## 五、项目结构
+
+```
+src/
+  components/        # 业务组件
+    Layout.jsx       # 侧边栏布局 + API 设置弹窗
+  pages/             # 页面级组件
+    Dashboard.jsx           # 首页
+    ExperienceInput.jsx     # 经历录入 + AI 解析
+    ExperienceLibrary.jsx   # 经历库管理
+    MaterialGenerate.jsx    # AI 材料生成
+    TemplateCommunity.jsx   # 模板社区
+  utils/
+    ai.js            # AI 调用封装
+    prompts.js       # Prompt 模板
+    mockGenerate.js  # 演示模式高质量生成
+  data/
+    storage.js       # localStorage CRUD + mock 数据
+  App.jsx            # 路由配置
+```
+
+---
+
+## 六、AI 原生设计
+
+1. **AI 经历解析**：输入自然语言文本，AI 自动提取结构化字段（标题、类型、时间、标签、成果）
+2. **AI 材料生成**：基于用户选择的经历与目标场景，自动生成定制化申请材料
+3. **场景化 Prompt 工程**：8 种场景各配备专属 Prompt 模板，控制语言风格、篇幅与重点
+4. **演示模式**：无 API Key 时自动进入高质量演示模式，评委可直接体验完整功能
+
+---
+
+## 七、录屏脚本（3 分钟）
+
+| 时间 | 内容 |
+|------|------|
+| 00:00-00:20 | 展示痛点：大学四年写过 37 次材料，却一直在重复写同一段经历 |
+| 00:20-01:00 | 录入经历 → AI 逐字段解析 |
+| 01:00-02:00 | 选择"国家奖学金"场景 → 勾选经历 → AI 生成完整材料 |
+| 02:00-02:40 | 切换"求职简历"场景 → 同一批经历生成不同材料 |
+| 02:40-03:00 | 结束语：让成长不被遗忘，让机会不再错过 |
+
+---
+
+## 八、商业化空间
+
+- **To C**：高级会员解锁英文简历、面试模拟、多语言版本
+- **To B**：高校就业中心学工系统集成、校园招聘平台数据对接
