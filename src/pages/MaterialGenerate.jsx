@@ -5,6 +5,7 @@ import { Loader2, Copy, Check, Sparkles, ArrowRight, RotateCcw } from 'lucide-re
 import { getExperiences, incrementGenerated, getSettings } from '../data/storage.js'
 import { callAI } from '../utils/ai.js'
 import { buildGeneratePrompt } from '../utils/prompts.js'
+import { generateMockContent } from '../utils/mockGenerate.js'
 
 const PURPOSES = [
   { value: '国家奖学金', label: '国家奖学金申请' },
@@ -27,7 +28,7 @@ export default function MaterialGenerate() {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState('')
   const [copied, setCopied] = useState(false)
-  const [noKeyWarning, setNoKeyWarning] = useState(false)
+  const [isDemo, setIsDemo] = useState(false)
 
   useEffect(() => {
     const preselected = location.state?.selectedIds || []
@@ -53,17 +54,27 @@ export default function MaterialGenerate() {
   }
 
   const handleGenerate = async () => {
-    const settings = getSettings()
-    if (!settings.apiKey) {
-      setNoKeyWarning(true)
-      return
-    }
-
     const selected = experiences.filter(e => selectedIds.includes(e.id))
     if (selected.length === 0) return
 
+    const settings = getSettings()
+    const hasKey = Boolean(settings.apiKey)
+
     setLoading(true)
     setStep(3)
+    setIsDemo(!hasKey)
+
+    if (!hasKey) {
+      // 演示模式：延迟 1.5s 模拟 AI 思考
+      await new Promise(r => setTimeout(r, 1500))
+      const content = generateMockContent(purpose, selected)
+      setResult(content)
+      incrementGenerated()
+      setStep(4)
+      setLoading(false)
+      return
+    }
+
     try {
       const prompt = buildGeneratePrompt(purpose, selected)
       const content = await callAI(prompt)
@@ -82,22 +93,6 @@ export default function MaterialGenerate() {
     navigator.clipboard.writeText(result)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
-  }
-
-  const handleMockGenerate = () => {
-    const selected = experiences.filter(e => selectedIds.includes(e.id))
-    if (selected.length === 0) return
-    setLoading(true)
-    setStep(3)
-    setTimeout(() => {
-      const expText = selected.map(e => `${e.title}：${e.description}`).join('；')
-      const mockResult = `【${purpose}材料】\n\n尊敬的评审老师/面试官：\n\n您好！以下是我的个人经历概述：\n\n${expText}\n\n在这些经历中，我不仅锻炼了自己的专业技能，更培养了团队协作、沟通表达与问题解决的能力。我始终保持积极进取的态度，努力将每一项工作做到最好。\n\n未来，我将继续以饱满的热情投入到学习和工作中，不断提升自我，争取更大的进步。\n\n感谢您的时间和考虑！`
-      setResult(mockResult)
-      incrementGenerated()
-      setStep(4)
-      setLoading(false)
-      setNoKeyWarning(false)
-    }, 1500)
   }
 
   return (
@@ -205,36 +200,6 @@ export default function MaterialGenerate() {
         </motion.div>
       )}
 
-      {/* 无API Key提示 */}
-      {noKeyWarning && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="bg-surface rounded-2xl shadow-xl w-full max-w-md p-6"
-          >
-            <h2 className="text-lg font-bold text-text mb-2">未配置 API Key</h2>
-            <p className="text-sm text-text-secondary mb-6">
-              您尚未配置 AI 接口的 API Key。您可以选择：
-            </p>
-            <div className="space-y-3">
-              <button
-                onClick={() => setNoKeyWarning(false)}
-                className="w-full px-4 py-2.5 rounded-xl bg-primary text-white text-sm font-medium hover:bg-primary-dark transition-colors"
-              >
-                去设置 API Key
-              </button>
-              <button
-                onClick={handleMockGenerate}
-                className="w-full px-4 py-2.5 rounded-xl border border-border text-sm font-medium text-text-secondary hover:bg-bg transition-colors"
-              >
-                使用模拟生成（演示用）
-              </button>
-            </div>
-          </motion.div>
-        </div>
-      )}
-
       {/* 步骤4：结果展示 */}
       {step === 4 && (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
@@ -242,10 +207,15 @@ export default function MaterialGenerate() {
             <h2 className="text-lg font-bold text-text flex items-center gap-2">
               <Sparkles size={20} className="text-primary" />
               生成结果
+              {isDemo && (
+                <span className="px-2 py-0.5 rounded-lg bg-amber-50 text-amber-600 text-xs font-medium border border-amber-100">
+                  演示模式
+                </span>
+              )}
             </h2>
             <div className="flex gap-2">
               <button
-                onClick={() => { setStep(1); setResult(''); setSelectedIds([]); setPurpose('') }}
+                onClick={() => { setStep(1); setResult(''); setSelectedIds([]); setPurpose(''); setIsDemo(false) }}
                 className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium text-text-secondary hover:bg-bg border border-border transition-colors"
               >
                 <RotateCcw size={14} />
