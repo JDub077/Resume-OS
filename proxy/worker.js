@@ -38,7 +38,7 @@ export default {
         rawLength: rawKey.length,
         cleanedLength: cleanedKey.length,
         firstChars: cleanedKey.slice(0, 12),
-        targetBase: env.TARGET_BASE_URL || 'https://api.moonshot.cn/v1',
+        targetBase: env.TARGET_BASE_URL || 'https://api.siliconflow.cn/v1',
         hint: cleanedKey ? 'Key 已配置' : '请在 Variables 中添加 KIMI_API_KEY（Secret 类型），填入 SiliconFlow / Groq 等厂商的 Key，然后点击 Deploy',
       }), {
         headers: {
