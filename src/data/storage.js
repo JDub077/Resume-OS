@@ -11,7 +11,7 @@ const PROXY_URL = 'https://resume-proxy.2955647756.workers.dev';
 
 const DEFAULT_SETTINGS = {
   baseURL: PROXY_URL,
-  model: 'kimi-k2-6',
+  model: 'kimi-k2.5',
   useProxy: Boolean(PROXY_URL),
 };
 
