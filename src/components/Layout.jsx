@@ -11,7 +11,8 @@ import {
   X,
   Key,
   Globe,
-  Cpu
+  Cpu,
+  Shield
 } from 'lucide-react'
 import { getSettings, saveSettings } from '../data/storage.js'
 
@@ -33,6 +34,8 @@ export default function Layout() {
     saveSettings(settings)
     setShowSettings(false)
   }
+
+  const isProxy = Boolean(settings.useProxy)
 
   return (
     <div className="flex flex-col md:flex-row min-h-screen bg-bg">
@@ -125,20 +128,49 @@ export default function Layout() {
               </button>
             </div>
 
-            <div className="space-y-4">
-              <div>
-                <label className="flex items-center gap-2 text-sm font-medium text-text mb-2">
-                  <Key size={16} />
-                  API Key
+            {/* 代理模式开关 */}
+            <div className="mb-5 p-4 rounded-xl bg-primary/5 border border-primary/10">
+              <div className="flex items-center justify-between mb-2">
+                <label className="flex items-center gap-2 text-sm font-medium text-text">
+                  <Shield size={16} className="text-primary" />
+                  代理服务模式
                 </label>
-                <input
-                  type="password"
-                  value={settings.apiKey || ''}
-                  onChange={e => setSettings({ ...settings, apiKey: e.target.value })}
-                  placeholder="sk-..."
-                  className="w-full px-4 py-2.5 rounded-xl border border-border bg-bg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
-                />
+                <button
+                  onClick={() => setSettings({ ...settings, useProxy: !isProxy })}
+                  className={`relative w-11 h-6 rounded-full transition-colors ${
+                    isProxy ? 'bg-primary' : 'bg-border'
+                  }`}
+                >
+                  <span
+                    className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${
+                      isProxy ? 'translate-x-5' : 'translate-x-0'
+                    }`}
+                  />
+                </button>
               </div>
+              <p className="text-xs text-text-secondary">
+                {isProxy
+                  ? '已启用代理服务，API Key 由服务端持有，前端无需配置'
+                  : '关闭代理后，需要在前端填写自己的 API Key'}
+              </p>
+            </div>
+
+            <div className="space-y-4">
+              {!isProxy && (
+                <div>
+                  <label className="flex items-center gap-2 text-sm font-medium text-text mb-2">
+                    <Key size={16} />
+                    API Key
+                  </label>
+                  <input
+                    type="password"
+                    value={settings.apiKey || ''}
+                    onChange={e => setSettings({ ...settings, apiKey: e.target.value })}
+                    placeholder="sk-..."
+                    className="w-full px-4 py-2.5 rounded-xl border border-border bg-bg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
+                  />
+                </div>
+              )}
 
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium text-text mb-2">
@@ -152,7 +184,11 @@ export default function Layout() {
                   placeholder="https://api.openai.com/v1"
                   className="w-full px-4 py-2.5 rounded-xl border border-border bg-bg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
                 />
-                <p className="mt-1 text-xs text-text-secondary">留空则使用默认 OpenAI 地址</p>
+                <p className="mt-1 text-xs text-text-secondary">
+                  {isProxy
+                    ? '代理服务地址，由开发者预配置'
+                    : '留空则使用默认 OpenAI 地址'}
+                </p>
               </div>
 
               <div>

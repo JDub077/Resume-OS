@@ -1,6 +1,20 @@
 const STORAGE_KEY = 'resume_os_experiences';
 const STORAGE_KEY_SETTINGS = 'resume_os_settings';
 
+// ========== 代理配置（部署后替换此处）==========
+// 1. 在 Cloudflare Worker 上部署 proxy/worker.js
+// 2. 设置环境变量 KIMI_API_KEY = sk-xxx
+// 3. 把 Worker 地址填到下面 PROXY_URL 中
+// 4. 重新构建部署，评委打开网页即可直接使用真实 AI
+const PROXY_URL = ''; // 示例: 'https://resume-proxy.yourname.workers.dev'
+// ================================================
+
+const DEFAULT_SETTINGS = {
+  baseURL: PROXY_URL,
+  model: 'moonshot-v1-8k',
+  useProxy: Boolean(PROXY_URL),
+};
+
 // 默认示例数据
 const DEFAULT_EXPERIENCES = [
   {
@@ -44,6 +58,10 @@ const DEFAULT_EXPERIENCES = [
 function initStorage() {
   if (!localStorage.getItem(STORAGE_KEY)) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_EXPERIENCES));
+  }
+  // 预置默认代理配置（首次访问）
+  if (!localStorage.getItem(STORAGE_KEY_SETTINGS) && DEFAULT_SETTINGS.baseURL) {
+    localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(DEFAULT_SETTINGS));
   }
 }
 
@@ -103,6 +121,7 @@ export function incrementGenerated() {
 }
 
 export function getSettings() {
+  initStorage();
   try {
     return JSON.parse(localStorage.getItem(STORAGE_KEY_SETTINGS)) || {};
   } catch {

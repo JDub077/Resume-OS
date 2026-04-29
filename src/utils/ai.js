@@ -2,20 +2,29 @@ import { getSettings } from '../data/storage.js';
 
 export async function callAI(prompt) {
   const settings = getSettings();
+  const useProxy = settings.useProxy;
   const apiKey = settings.apiKey;
   const baseURL = settings.baseURL || 'https://api.openai.com/v1';
   const model = settings.model || 'gpt-3.5-turbo';
 
-  if (!apiKey) {
+  // 代理模式下不需要前端 Key，Worker 端会自己加
+  // 非代理模式下必须有 Key
+  if (!useProxy && !apiKey) {
     throw new Error('请先配置 API Key');
+  }
+
+  const headers = {
+    'Content-Type': 'application/json',
+  };
+
+  // 非代理模式才发送前端 Key
+  if (!useProxy && apiKey) {
+    headers['Authorization'] = `Bearer ${apiKey}`;
   }
 
   const res = await fetch(`${baseURL}/chat/completions`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`
-    },
+    headers,
     body: JSON.stringify({
       model,
       messages: [
@@ -38,9 +47,10 @@ export async function callAI(prompt) {
 
 export async function parseExperience(text) {
   const settings = getSettings();
+  const useProxy = settings.useProxy;
   const apiKey = settings.apiKey;
 
-  if (!apiKey) {
+  if (!useProxy && !apiKey) {
     // 无API Key时，做简单的本地解析
     return localParse(text);
   }
