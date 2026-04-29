@@ -29,6 +29,8 @@ export default function MaterialGenerate() {
   const [result, setResult] = useState('')
   const [copied, setCopied] = useState(false)
   const [isDemo, setIsDemo] = useState(false)
+  const [aiInfo, setAiInfo] = useState(null)
+  const [elapsed, setElapsed] = useState(0)
 
   useEffect(() => {
     const preselected = location.state?.selectedIds || []
@@ -63,10 +65,12 @@ export default function MaterialGenerate() {
     setLoading(true)
     setStep(3)
     setIsDemo(!hasKey)
+    setAiInfo(hasKey ? { model: settings.model || 'gpt-3.5-turbo', baseURL: settings.baseURL || '默认' } : null)
+    setElapsed(0)
 
     if (!hasKey) {
-      // 演示模式：延迟 1.5s 模拟 AI 思考
-      await new Promise(r => setTimeout(r, 1500))
+      // 演示模式：延迟 0.8s
+      await new Promise(r => setTimeout(r, 800))
       const content = generateMockContent(purpose, selected)
       setResult(content)
       incrementGenerated()
@@ -75,14 +79,20 @@ export default function MaterialGenerate() {
       return
     }
 
+    // 真实 AI 模式：记录耗时
+    const start = Date.now()
     try {
       const prompt = buildGeneratePrompt(purpose, selected)
       const content = await callAI(prompt)
+      const cost = ((Date.now() - start) / 1000).toFixed(1)
+      setElapsed(Number(cost))
       setResult(content)
       incrementGenerated()
       setStep(4)
     } catch (e) {
-      setResult(`生成失败：${e.message}\n\n请检查 API Key 和网络连接后重试。`)
+      const cost = ((Date.now() - start) / 1000).toFixed(1)
+      setElapsed(Number(cost))
+      setResult(`生成失败：${e.message}\n\n请检查 API Key、Base URL 和模型名称是否正确。`)
       setStep(4)
     } finally {
       setLoading(false)
@@ -194,9 +204,19 @@ export default function MaterialGenerate() {
 
       {/* 步骤3：生成中 */}
       {step === 3 && (
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-20">
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-20"
+        >
           <Loader2 size={40} className="animate-spin text-primary mx-auto mb-4" />
-          <p className="text-text-secondary">AI 正在思考，请稍候...</p>
+          <p className="text-text-secondary mb-2"
+          >
+            {isDemo ? '演示模式生成中...' : `正在调用 ${aiInfo?.model || 'AI'} 接口生成...`}
+          </p>
+          {!isDemo && (
+            <p className="text-xs text-text-secondary"
+            >
+              真实 AI 生成通常需要 3-8 秒
+            </p>
+          )}
         </motion.div>
       )}
 
@@ -207,15 +227,24 @@ export default function MaterialGenerate() {
             <h2 className="text-lg font-bold text-text flex items-center gap-2">
               <Sparkles size={20} className="text-primary" />
               生成结果
-              {isDemo && (
+              {isDemo ? (
                 <span className="px-2 py-0.5 rounded-lg bg-amber-50 text-amber-600 text-xs font-medium border border-amber-100">
                   演示模式
                 </span>
+              ) : (
+                <span className="px-2 py-0.5 rounded-lg bg-emerald-50 text-emerald-600 text-xs font-medium border border-emerald-100">
+                  AI 生成 · {aiInfo?.model}
+                </span>
               )}
             </h2>
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2">
+              {!isDemo && elapsed > 0 && (
+                <span className="text-xs text-text-secondary mr-1">
+                  耗时 {elapsed}s
+                </span>
+              )}
               <button
-                onClick={() => { setStep(1); setResult(''); setSelectedIds([]); setPurpose(''); setIsDemo(false) }}
+                onClick={() => { setStep(1); setResult(''); setSelectedIds([]); setPurpose(''); setIsDemo(false); setAiInfo(null); setElapsed(0) }}
                 className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-medium text-text-secondary hover:bg-bg border border-border transition-colors"
               >
                 <RotateCcw size={14} />
