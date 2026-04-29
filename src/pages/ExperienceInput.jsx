@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Wand2, Save, Upload, ArrowLeft, Loader2, X, Sparkles } from 'lucide-react'
 import { getExperienceById, saveExperience } from '../data/storage.js'
 import { parseExperience } from '../utils/ai.js'
+import { mockPolish } from '../utils/mockPolish.js'
 
 const CATEGORIES = ['学生工作', '志愿服务', '实习经历', '项目实践', '获奖荣誉']
 
@@ -27,6 +28,7 @@ export default function ExperienceInput() {
   const [toast, setToast] = useState(null)
   const [parsingStep, setParsingStep] = useState(-1)
   const [parsingField, setParsingField] = useState('')
+  const [polishing, setPolishing] = useState(false)
 
   useEffect(() => {
     if (isEdit) {
@@ -37,6 +39,17 @@ export default function ExperienceInput() {
       }
     }
   }, [id, isEdit])
+
+  const handlePolish = async () => {
+    if (!parsed?.description) return
+    setPolishing(true)
+    // 模拟 AI 思考延迟
+    await new Promise(r => setTimeout(r, 800))
+    const better = mockPolish(parsed.description, parsed.title, parsed.category)
+    setParsed({ ...parsed, description: better })
+    setPolishing(false)
+    showToast('AI 润色完成')
+  }
 
   const handleParse = async () => {
     if (!rawText.trim()) return
@@ -289,6 +302,16 @@ export default function ExperienceInput() {
                 onChange={e => setParsed({ ...parsed, description: e.target.value })}
                 className="w-full h-24 px-4 py-3 rounded-xl border border-border bg-bg text-sm resize-none focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
               />
+              <div className="mt-2">
+                <button
+                  onClick={handlePolish}
+                  disabled={polishing || !parsed.description}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-primary border border-primary/20 hover:bg-primary/5 transition-colors disabled:opacity-50"
+                >
+                  {polishing ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} />}
+                  {polishing ? 'AI 润色中...' : 'AI 润色表达'}
+                </button>
+              </div>
             </motion.div>
           </div>
 

@@ -15,7 +15,8 @@ import {
   X,
   ArrowRight
 } from 'lucide-react'
-import { getStats } from '../data/storage.js'
+import { getStats, getExperiences } from '../data/storage.js'
+import { CalendarDays } from 'lucide-react'
 
 const categoryIcons = {
   '学生工作': Briefcase,
@@ -51,9 +52,18 @@ export default function Dashboard() {
   const navigate = useNavigate()
   const [stats, setStats] = useState({ total: 0, generated: 0 })
   const [showPainModal, setShowPainModal] = useState(false)
+  const [timeline, setTimeline] = useState([])
 
   useEffect(() => {
     setStats(getStats())
+    const exps = getExperiences()
+    // 按时间排序（简单字符串排序，2025.04 格式）
+    const sorted = [...exps].sort((a, b) => {
+      const ta = (a.time || '').replace(/\D/g, '')
+      const tb = (b.time || '').replace(/\D/g, '')
+      return ta.localeCompare(tb)
+    })
+    setTimeline(sorted)
   }, [])
 
   const categories = ['学生工作', '志愿服务', '实习经历', '项目实践']
@@ -96,6 +106,49 @@ export default function Dashboard() {
           )
         })}
       </div>
+
+      {/* 成长时间线 */}
+      {timeline.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.22 }}
+          className="bg-surface rounded-2xl border border-border p-6 mb-6"
+        >
+          <div className="flex items-center gap-2 mb-5">
+            <CalendarDays size={18} className="text-primary" />
+            <h2 className="text-base font-bold text-text">成长时间线</h2>
+          </div>
+          <div className="relative pl-4">
+            {/* 竖线 */}
+            <div className="absolute left-[19px] top-2 bottom-2 w-0.5 bg-border" />
+            <div className="space-y-4 max-h-64 overflow-auto pr-2">
+              {timeline.map((exp, i) => (
+                <motion.div
+                  key={exp.id}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.08 }}
+                  className="relative flex items-start gap-3"
+                >
+                  <div className={`w-3 h-3 rounded-full mt-1.5 flex-shrink-0 z-10 border-2 ${
+                    i === timeline.length - 1
+                      ? 'bg-primary border-primary'
+                      : 'bg-surface border-primary'
+                  }`} />
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-0.5">
+                      <span className="text-xs font-medium text-primary">{exp.time}</span>
+                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-bg text-text-secondary">{exp.category}</span>
+                    </div>
+                    <p className="text-sm font-medium text-text truncate">{exp.title}</p>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       {/* 痛点对比入口 */}
       <motion.div
