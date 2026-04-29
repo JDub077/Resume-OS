@@ -16,7 +16,8 @@ import {
   ArrowRight
 } from 'lucide-react'
 import { getStats, getExperiences, getCategories } from '../data/storage.js'
-import { CalendarDays } from 'lucide-react'
+import { CalendarDays, Share2, Zap, Lightbulb, ShieldCheck } from 'lucide-react'
+import ShareCard from '../components/ShareCard.jsx'
 
 const categoryIcons = {
   '学生工作': Briefcase,
@@ -48,10 +49,100 @@ const solutions = [
   { icon: CheckCircle2, text: '经历增加后，材料自动更新升级' },
 ]
 
+// ========== 雷达图组件 ==========
+function RadarChart({ data, size = 220 }) {
+  const center = size / 2
+  const radius = size / 2 - 44
+  const angleStep = (Math.PI * 2) / data.length
+
+  const points = data.map((d, i) => {
+    const angle = i * angleStep - Math.PI / 2
+    const r = Math.min(radius, (d.value / d.max) * radius)
+    return { x: center + r * Math.cos(angle), y: center + r * Math.sin(angle) }
+  })
+
+  const gridLevels = 4
+
+  return (
+    <svg width={size} height={size} className="mx-auto">
+      {Array.from({ length: gridLevels }).map((_, level) => {
+        const levelRadius = ((level + 1) / gridLevels) * radius
+        const levelPoints = data.map((_, i) => {
+          const angle = i * angleStep - Math.PI / 2
+          return `${center + levelRadius * Math.cos(angle)},${center + levelRadius * Math.sin(angle)}`
+        }).join(' ')
+        return <polygon key={level} points={levelPoints} fill="none" stroke="#e5e7eb" strokeWidth="1" />
+      })}
+      {data.map((_, i) => {
+        const angle = i * angleStep - Math.PI / 2
+        return (
+          <line key={i} x1={center} y1={center}
+            x2={center + radius * Math.cos(angle)} y2={center + radius * Math.sin(angle)}
+            stroke="#e5e7eb" strokeWidth="1" />
+        )
+      })}
+      <polygon
+        points={points.map(p => `${p.x},${p.y}`).join(' ')}
+        fill="rgba(99, 102, 241, 0.15)"
+        stroke="#6366f1"
+        strokeWidth="2"
+      />
+      {points.map((p, i) => (
+        <circle key={i} cx={p.x} cy={p.y} r="3.5" fill="#6366f1" />
+      ))}
+      {data.map((d, i) => {
+        const angle = i * angleStep - Math.PI / 2
+        const labelRadius = radius + 26
+        const x = center + labelRadius * Math.cos(angle)
+        const y = center + labelRadius * Math.sin(angle)
+        return (
+          <text key={i} x={x} y={y} textAnchor="middle" dominantBaseline="middle"
+            className="text-[10px] fill-text-secondary font-medium"
+          >
+            {d.label}
+          </text>
+        )
+      })}
+    </svg>
+  )
+}
+
+// ========== AI 诊断逻辑 ==========
+function generateDiagnosis(stats) {
+  const suggestions = []
+
+  if ((stats['实习经历'] || 0) === 0) {
+    suggestions.push({ type: 'warning', text: '实习经历为空，建议大三暑期补充一段对口实习，求职竞争力会显著提升' })
+  }
+  if ((stats['项目实践'] || 0) === 0) {
+    suggestions.push({ type: 'warning', text: '项目实践偏少，技术类岗位通常需要至少1-2个项目经历来证明动手能力' })
+  }
+  if ((stats['获奖荣誉'] || 0) === 0) {
+    suggestions.push({ type: 'info', text: '缺少获奖荣誉，建议关注学科竞赛、奖学金申请，为简历增加硬实力背书' })
+  }
+  if ((stats['志愿服务'] || 0) === 0) {
+    suggestions.push({ type: 'info', text: '志愿服务经历空白，适当参与公益活动可以体现社会责任感和软实力' })
+  }
+  if ((stats['学生工作'] || 0) === 0) {
+    suggestions.push({ type: 'info', text: '学生工作经历较少，担任班干部或社团职务有助于锻炼组织协调能力' })
+  }
+
+  if (suggestions.length === 0) {
+    suggestions.push({ type: 'success', text: '你的经历分布非常均衡！继续保持，可以尝试冲击更高层次的竞赛或顶尖企业实习。' })
+  }
+
+  const dimensions = ['学生工作', '志愿服务', '实习经历', '项目实践', '获奖荣誉']
+  const filledCount = dimensions.filter(d => (stats[d] || 0) > 0).length
+  const totalScore = Math.min(100, filledCount * 12 + (stats.total || 0) * 6)
+
+  return { suggestions, score: totalScore }
+}
+
 export default function Dashboard() {
   const navigate = useNavigate()
   const [stats, setStats] = useState({ total: 0, generated: 0 })
   const [showPainModal, setShowPainModal] = useState(false)
+  const [showShareCard, setShowShareCard] = useState(false)
   const [timeline, setTimeline] = useState([])
 
   useEffect(() => {
@@ -68,6 +159,7 @@ export default function Dashboard() {
 
   const categories = getCategories()
   const FallbackIcon = Briefcase
+  const diagnosis = generateDiagnosis(stats)
 
   return (
     <div>
@@ -109,6 +201,66 @@ export default function Dashboard() {
           )
         })}
       </div>
+
+      {/* AI 成长诊断 */}
+      <motion.div
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.15 }}
+        className="bg-surface rounded-2xl border border-border p-6 mb-6"
+      >
+        <div className="flex items-center gap-2 mb-5">
+          <Zap size={18} className="text-primary" />
+          <h2 className="text-base font-bold text-text">AI 成长诊断</h2>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
+          {/* 左侧：雷达图 */}
+          <div className="flex justify-center">
+            <RadarChart
+              data={[
+                { label: '学生工作', value: stats['学生工作'] || 0, max: Math.max(3, stats.total || 1) },
+                { label: '志愿服务', value: stats['志愿服务'] || 0, max: Math.max(3, stats.total || 1) },
+                { label: '实习经历', value: stats['实习经历'] || 0, max: Math.max(3, stats.total || 1) },
+                { label: '项目实践', value: stats['项目实践'] || 0, max: Math.max(3, stats.total || 1) },
+                { label: '获奖荣誉', value: stats['获奖荣誉'] || 0, max: Math.max(3, stats.total || 1) },
+              ]}
+            />
+          </div>
+
+          {/* 右侧：评分与建议 */}
+          <div>
+            <div className="mb-4">
+              <p className="text-sm text-text-secondary mb-1">综合成长指数</p>
+              <div className="flex items-end gap-2">
+                <span className="text-4xl font-bold text-primary">{diagnosis.score}</span>
+                <span className="text-sm text-text-secondary mb-1">/ 100</span>
+              </div>
+              <div className="mt-2 h-2 bg-border rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-primary rounded-full transition-all"
+                  style={{ width: `${diagnosis.score}%` }}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              {diagnosis.suggestions.map((s, i) => (
+                <div key={i} className={`flex items-start gap-2 p-2.5 rounded-xl text-xs ${
+                  s.type === 'warning' ? 'bg-amber-50 text-amber-700 border border-amber-100'
+                    : s.type === 'success' ? 'bg-emerald-50 text-emerald-700 border border-emerald-100'
+                    : 'bg-sky-50 text-sky-700 border border-sky-100'
+                }`}>
+                  {s.type === 'warning' ? <Lightbulb size={14} className="mt-0.5 flex-shrink-0" />
+                    : s.type === 'success' ? <ShieldCheck size={14} className="mt-0.5 flex-shrink-0" />
+                    : <Lightbulb size={14} className="mt-0.5 flex-shrink-0" />}
+                  <span>{s.text}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </motion.div>
 
       {/* 成长时间线 */}
       {timeline.length > 0 && (
@@ -203,6 +355,13 @@ export default function Dashboard() {
             <Layers size={18} />
             浏览模板
           </button>
+          <button
+            onClick={() => setShowShareCard(true)}
+            className="flex items-center gap-2 px-5 py-3 rounded-xl bg-surface border border-border text-text font-medium text-sm hover:bg-bg transition-colors"
+          >
+            <Share2 size={18} />
+            生成分享卡片
+          </button>
         </div>
       </motion.div>
 
@@ -296,6 +455,9 @@ export default function Dashboard() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* 分享卡片弹窗 */}
+      {showShareCard && <ShareCard onClose={() => setShowShareCard(false)} />}
     </div>
   )
 }
