@@ -135,3 +135,30 @@ export function getSettings() {
 export function saveSettings(settings) {
   localStorage.setItem(STORAGE_KEY_SETTINGS, JSON.stringify(settings));
 }
+
+const STORAGE_KEY_GENERATED = 'resume_os_generated';
+
+export function getGeneratedRecords() {
+  try {
+    return JSON.parse(localStorage.getItem(STORAGE_KEY_GENERATED)) || [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveGeneratedRecord(record) {
+  const list = getGeneratedRecords();
+  const newRecord = {
+    ...record,
+    id: record.id || Date.now(),
+    createdAt: record.createdAt || new Date().toISOString(),
+  };
+  list.unshift(newRecord);
+  localStorage.setItem(STORAGE_KEY_GENERATED, JSON.stringify(list.slice(0, 50)));
+  return newRecord;
+}
+
+export function deleteGeneratedRecord(id) {
+  const list = getGeneratedRecords().filter(r => r.id !== id);
+  localStorage.setItem(STORAGE_KEY_GENERATED, JSON.stringify(list));
+}
