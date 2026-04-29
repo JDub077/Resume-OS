@@ -39,7 +39,7 @@ export default {
         cleanedLength: cleanedKey.length,
         firstChars: cleanedKey.slice(0, 12),
         targetBase: env.TARGET_BASE_URL || 'https://api.moonshot.cn/v1',
-        hint: cleanedKey ? 'Key 已配置' : '请在 Variables 中添加 KIMI_API_KEY（Secret 类型），然后点击 Deploy',
+        hint: cleanedKey ? 'Key 已配置' : '请在 Variables 中添加 KIMI_API_KEY（Secret 类型），填入 SiliconFlow / Groq 等厂商的 Key，然后点击 Deploy',
       }), {
         headers: {
           'Content-Type': 'application/json',
@@ -49,8 +49,8 @@ export default {
     }
 
     const targetPath = url.pathname + url.search;
-    // 注意：Kimi API 的标准 Base URL 是 https://api.moonshot.cn/v1
-    const targetBase = env.TARGET_BASE_URL || 'https://api.moonshot.cn/v1';
+    // 使用 SiliconFlow（硅基流动）API，国内稳定、OpenAI 兼容、新用户免费送额度
+    const targetBase = env.TARGET_BASE_URL || 'https://api.siliconflow.cn/v1';
     const targetUrl = targetBase + targetPath;
 
     let body;
@@ -65,7 +65,7 @@ export default {
     if (!apiKey) {
       return new Response(JSON.stringify({
         error: 'Proxy API Key not configured',
-        hint: '请在 Cloudflare Worker Settings → Variables 中添加 KIMI_API_KEY（Secret 类型），然后点击 Deploy',
+        hint: '请在 Cloudflare Worker Settings → Variables 中添加 KIMI_API_KEY（Secret 类型），填入 SiliconFlow / Groq 等厂商的 Key，然后点击 Deploy',
       }), {
         status: 500,
         headers: {

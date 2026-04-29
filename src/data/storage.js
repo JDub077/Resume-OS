@@ -11,7 +11,10 @@ const PROXY_URL = 'https://resume-proxy.2955647756.workers.dev';
 
 const DEFAULT_SETTINGS = {
   baseURL: PROXY_URL,
-  model: 'kimi-k2.5',
+  // SiliconFlow（硅基流动）免费模型，国内稳定、OpenAI 兼容
+  // 注册地址：https://cloud.siliconflow.cn/
+  // 其他可选免费模型：Qwen/Qwen2.5-Coder-7B-Instruct、THUDM/glm-4-9b-chat
+  model: 'Qwen/Qwen2.5-7B-Instruct',
   useProxy: Boolean(PROXY_URL),
 };
 
