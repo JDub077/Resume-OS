@@ -3,8 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Wand2, Save, Upload, ArrowLeft, Loader2, X, Sparkles } from 'lucide-react'
 import { getExperienceById, saveExperience } from '../data/storage.js'
-import { parseExperience } from '../utils/ai.js'
-import { mockPolish } from '../utils/mockPolish.js'
+import { parseExperience, polishExperience } from '../utils/ai.js'
 
 const CATEGORIES = ['学生工作', '志愿服务', '实习经历', '项目实践', '获奖荣誉']
 
@@ -43,12 +42,15 @@ export default function ExperienceInput() {
   const handlePolish = async () => {
     if (!parsed?.description) return
     setPolishing(true)
-    // 模拟 AI 思考延迟
-    await new Promise(r => setTimeout(r, 800))
-    const better = mockPolish(parsed.description, parsed.title, parsed.category)
-    setParsed({ ...parsed, description: better })
-    setPolishing(false)
-    showToast('AI 润色完成')
+    try {
+      const better = await polishExperience(parsed.description, parsed.title, parsed.category)
+      setParsed({ ...parsed, description: better })
+      showToast('AI 润色完成')
+    } catch (e) {
+      showToast(e.message || '润色失败')
+    } finally {
+      setPolishing(false)
+    }
   }
 
   const handleParse = async () => {

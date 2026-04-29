@@ -5,6 +5,7 @@ import ExperienceInput from './pages/ExperienceInput.jsx'
 import ExperienceLibrary from './pages/ExperienceLibrary.jsx'
 import MaterialGenerate from './pages/MaterialGenerate.jsx'
 import TemplateCommunity from './pages/TemplateCommunity.jsx'
+import GeneratedHistory from './pages/GeneratedHistory.jsx'
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
         <Route path="input/:id" element={<ExperienceInput />} />
         <Route path="library" element={<ExperienceLibrary />} />
         <Route path="generate" element={<MaterialGenerate />} />
+        <Route path="history" element={<GeneratedHistory />} />
         <Route path="templates" element={<TemplateCommunity />} />
       </Route>
     </Routes>

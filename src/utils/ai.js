@@ -1,4 +1,5 @@
 import { getSettings } from '../data/storage.js';
+import { mockPolish } from './mockPolish.js';
 
 export async function callAI(prompt) {
   const settings = getSettings();
@@ -78,6 +79,30 @@ export async function parseExperience(text) {
     return localParse(text);
   } catch {
     return localParse(text);
+  }
+}
+
+export async function polishExperience(description, title, category) {
+  const settings = getSettings();
+  const useProxy = settings.useProxy;
+  const apiKey = settings.apiKey;
+
+  // 无 API Key 时 fallback 到本地规则
+  if (!useProxy && !apiKey) {
+    return mockPolish(description, title, category);
+  }
+
+  try {
+    const prompt = `请对以下大学生经历描述进行专业润色，使其表达更正式、更有说服力，适合用于奖学金申请、简历或自我介绍等材料。保持原意不变，只优化措辞和表达方式。
+
+经历标题：${title || ''}
+经历类型：${category || ''}
+原始描述："""${description}"""
+
+请直接返回润色后的文本，不要添加任何解释或额外内容。`;
+    return await callAI(prompt);
+  } catch {
+    return mockPolish(description, title, category);
   }
 }
 

@@ -1,5 +1,5 @@
-import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Plus, Pencil, Trash2, FileText, Search, X } from 'lucide-react'
 import { getExperiences, deleteExperience } from '../data/storage.js'
@@ -16,11 +16,19 @@ const categoryColors = {
 
 export default function ExperienceLibrary() {
   const navigate = useNavigate()
+  const location = useLocation()
   const [activeTab, setActiveTab] = useState('全部')
   const [search, setSearch] = useState('')
   const [experiences, setExperiences] = useState(getExperiences())
   const [deleteId, setDeleteId] = useState(null)
   const [toast, setToast] = useState(null)
+
+  useEffect(() => {
+    const cat = location.state?.category
+    if (cat && TABS.includes(cat)) {
+      setActiveTab(cat)
+    }
+  }, [location.state])
 
   const filtered = experiences.filter(e => {
     const matchTab = activeTab === '全部' || e.category === activeTab

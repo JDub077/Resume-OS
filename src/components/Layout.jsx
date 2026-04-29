@@ -7,6 +7,7 @@ import {
   BookOpen,
   FileText,
   Layers,
+  History,
   Settings,
   X,
   Key,
@@ -21,6 +22,7 @@ const navItems = [
   { path: '/input', label: '录入经历', icon: PlusCircle },
   { path: '/library', label: '经历库', icon: BookOpen },
   { path: '/generate', label: '生成材料', icon: FileText },
+  { path: '/history', label: '已生成材料', icon: History },
   { path: '/templates', label: '模板社区', icon: Layers },
 ]
 
