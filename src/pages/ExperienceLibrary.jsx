@@ -1,10 +1,18 @@
 import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, Pencil, Trash2, FileText, Search, X } from 'lucide-react'
-import { getExperiences, deleteExperience } from '../data/storage.js'
+import { Plus, Pencil, Trash2, FileText, Search, X, Briefcase, Heart, TrendingUp, Code, Award } from 'lucide-react'
+import { getExperiences, deleteExperience, getStats } from '../data/storage.js'
 
 const TABS = ['全部', '学生工作', '志愿服务', '实习经历', '项目实践', '获奖荣誉']
+
+const categoryMeta = [
+  { key: '学生工作', icon: Briefcase, color: 'bg-amber-50 text-amber-600' },
+  { key: '志愿服务', icon: Heart, color: 'bg-rose-50 text-rose-600' },
+  { key: '实习经历', icon: TrendingUp, color: 'bg-emerald-50 text-emerald-600' },
+  { key: '项目实践', icon: Code, color: 'bg-violet-50 text-violet-600' },
+  { key: '获奖荣誉', icon: Award, color: 'bg-sky-50 text-sky-600' },
+]
 
 const categoryColors = {
   '学生工作': 'bg-amber-50 text-amber-600 border-amber-100',
@@ -22,6 +30,7 @@ export default function ExperienceLibrary() {
   const [experiences, setExperiences] = useState(getExperiences())
   const [deleteId, setDeleteId] = useState(null)
   const [toast, setToast] = useState(null)
+  const stats = getStats()
 
   useEffect(() => {
     const cat = location.state?.category
@@ -59,6 +68,34 @@ export default function ExperienceLibrary() {
           <Plus size={16} />
           添加经历
         </button>
+      </div>
+
+      {/* 分类可视化数据栏 */}
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
+        {categoryMeta.map(cat => {
+          const Icon = cat.icon
+          const count = stats[cat.key] || 0
+          const isActive = activeTab === cat.key
+          return (
+            <button
+              key={cat.key}
+              onClick={() => setActiveTab(isActive ? '全部' : cat.key)}
+              className={`flex items-center gap-3 p-4 rounded-xl border text-left transition-all ${
+                isActive
+                  ? 'border-primary bg-primary/5 ring-1 ring-primary/20'
+                  : 'border-border bg-surface hover:bg-bg'
+              }`}
+            >
+              <div className={`w-9 h-9 rounded-lg flex items-center justify-center ${cat.color}`}>
+                <Icon size={18} />
+              </div>
+              <div>
+                <p className="text-lg font-bold text-text">{count}</p>
+                <p className="text-xs text-text-secondary">{cat.key}</p>
+              </div>
+            </button>
+          )
+        })}
       </div>
 
       {/* 搜索 */}

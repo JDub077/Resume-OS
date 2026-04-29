@@ -95,8 +95,7 @@ export default function Dashboard() {
               initial={{ opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.08 }}
-              className="bg-surface rounded-2xl p-5 border border-border cursor-pointer hover:shadow-md transition-shadow"
-              onClick={() => navigate('/library', { state: { category: cat } })}
+              className="bg-surface rounded-2xl p-5 border border-border"
             >
               <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 ${colorClass}`}>
                 <Icon size={20} />
