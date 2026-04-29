@@ -25,8 +25,24 @@ export default {
       });
     }
 
-    // 只处理 /v1/chat/completions 路径
     const url = new URL(request.url);
+
+    // 健康检查：访问 /health 可验证 Key 是否配置成功
+    if (url.pathname === '/health') {
+      const keyExists = !!env.KIMI_API_KEY;
+      return new Response(JSON.stringify({
+        status: 'ok',
+        keyConfigured: keyExists,
+        keyLength: env.KIMI_API_KEY?.length || 0,
+        hint: keyExists ? 'Key 已配置' : '请在 Variables 中添加 KIMI_API_KEY 并 Deploy',
+      }), {
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': origin,
+        },
+      });
+    }
+
     const targetPath = url.pathname + url.search;
 
     // 目标 API（默认 Kimi，可改为任意 OpenAI 兼容接口）
@@ -44,7 +60,10 @@ export default {
     // 环境变量中的 API Key（服务端持有，前端不可见）
     const apiKey = env.KIMI_API_KEY;
     if (!apiKey) {
-      return new Response(JSON.stringify({ error: 'Proxy API Key not configured' }), {
+      return new Response(JSON.stringify({
+        error: 'Proxy API Key not configured',
+        hint: '请在 Cloudflare Worker Settings → Variables 中添加 KIMI_API_KEY（Secret 类型），然后点击 Deploy',
+      }), {
         status: 500,
         headers: {
           'Content-Type': 'application/json',
