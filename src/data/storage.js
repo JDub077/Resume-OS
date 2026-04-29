@@ -6,7 +6,7 @@ const STORAGE_KEY_SETTINGS = 'resume_os_settings';
 // 2. 设置环境变量 KIMI_API_KEY = sk-xxx
 // 3. 把 Worker 地址填到下面 PROXY_URL 中
 // 4. 重新构建部署，评委打开网页即可直接使用真实 AI
-const PROXY_URL = ''; // 示例: 'https://resume-proxy.yourname.workers.dev'
+const PROXY_URL = 'https://resume-proxy.2955647756.workers.dev';
 // ================================================
 
 const DEFAULT_SETTINGS = {
