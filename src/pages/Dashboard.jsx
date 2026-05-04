@@ -13,9 +13,10 @@ import {
   AlertCircle,
   CheckCircle2,
   X,
-  ArrowRight
+  ArrowRight,
+  Sparkles
 } from 'lucide-react'
-import { getStats, getExperiences, getCategories } from '../data/storage.js'
+import { getStats, getExperiences, getCategories, initDemoData } from '../data/storage.js'
 import { CalendarDays, Share2, Zap, Lightbulb, ShieldCheck } from 'lucide-react'
 import ShareCard from '../components/ShareCard.jsx'
 
@@ -143,6 +144,7 @@ export default function Dashboard() {
   const [stats, setStats] = useState({ total: 0, generated: 0 })
   const [showPainModal, setShowPainModal] = useState(false)
   const [showShareCard, setShowShareCard] = useState(false)
+  const [showDemoModal, setShowDemoModal] = useState(false)
   const [timeline, setTimeline] = useState([])
 
   useEffect(() => {
@@ -362,7 +364,17 @@ export default function Dashboard() {
             <Share2 size={18} />
             生成分享卡片
           </button>
+          <button
+            onClick={() => setShowDemoModal(true)}
+            className="flex items-center gap-2 px-5 py-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-700 font-medium text-sm hover:bg-amber-100 transition-colors"
+          >
+            <Sparkles size={18} />
+            加载演示数据
+          </button>
         </div>
+        <p className="mt-3 text-xs text-text-secondary">
+          评委体验专用：一键填充 12 条丰富经历 + 2 份已生成材料，即刻体验全部功能
+        </p>
       </motion.div>
 
       {/* 已生成统计 */}
@@ -458,6 +470,60 @@ export default function Dashboard() {
 
       {/* 分享卡片弹窗 */}
       {showShareCard && <ShareCard onClose={() => setShowShareCard(false)} />}
+
+      {/* 演示数据确认弹窗 */}
+      <AnimatePresence>
+        {showDemoModal && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="bg-surface rounded-2xl shadow-xl w-full max-w-md"
+            >
+              <div className="p-6 border-b border-border">
+                <h2 className="text-lg font-bold text-text">加载演示数据</h2>
+              </div>
+              <div className="p-6">
+                <p className="text-sm text-text-secondary mb-4">
+                  此操作将覆盖当前所有经历与生成记录，并填充以下演示内容：
+                </p>
+                <ul className="space-y-2 text-sm text-text">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 size={14} className="text-primary flex-shrink-0" />
+                    12 条涵盖 5 大维度的丰富经历
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 size={14} className="text-primary flex-shrink-0" />
+                    2 份已生成的材料历史记录
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle2 size={14} className="text-primary flex-shrink-0" />
+                    完整的时间线、雷达图与推荐排序数据
+                  </li>
+                </ul>
+              </div>
+              <div className="p-6 border-t border-border flex gap-3">
+                <button
+                  onClick={() => setShowDemoModal(false)}
+                  className="flex-1 px-4 py-2.5 rounded-xl border border-border text-sm font-medium text-text-secondary hover:bg-bg transition-colors"
+                >
+                  取消
+                </button>
+                <button
+                  onClick={() => {
+                    initDemoData()
+                    window.location.reload()
+                  }}
+                  className="flex-1 px-4 py-2.5 rounded-xl bg-amber-500 text-white text-sm font-medium hover:bg-amber-600 transition-colors"
+                >
+                  确认填充
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
